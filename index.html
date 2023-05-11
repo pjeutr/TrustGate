@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils_3d/control_utils_3d.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+  <script src="main.js"></script>
+
+  <link rel="stylesheet" href="style.css">
+
+<!-- /*
+    //https://github.com/google/mediapipe/blob/master/docs/solutions/pose.md
+    //https://learnopencv.com/building-a-body-posture-analysis-system-using-mediapipe/#disqus_thread
+    
+*/ -->
+
+  <script type="module">
+    const shout = document.getElementById("shout");
+    const heart = document.getElementById("heart");
+    const videoElement = document.getElementsByClassName('input_video')[0];
+    const canvasElement = document.getElementsByClassName('output_canvas')[0];
+    const canvasCtx = canvasElement.getContext('2d');
+    const landmarkContainer = document.getElementsByClassName('landmark-grid-container')[0];
+    const grid = new LandmarkGrid(landmarkContainer);
+    
+    const timer = new Timer();
+    var block = false;
+    var shut = 50;
+    var result = 0;
+    
+    function onResults(results) {
+      if (!results.poseLandmarks) {
+        grid.updateLandmarks([]);
+        return;
+      }
+    
+      canvasCtx.save();
+      canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+      canvasCtx.drawImage(results.segmentationMask, 0, 0,
+                          canvasElement.width, canvasElement.height);
+    
+      // Only overwrite existing pixels.
+      canvasCtx.globalCompositeOperation = 'source-in';
+      canvasCtx.fillStyle = '#000000';
+      canvasCtx.fillRect(0, 0, canvasElement.width, canvasElement.height);
+    
+      // Only overwrite missing pixels.
+      canvasCtx.globalCompositeOperation = 'destination-atop';
+      canvasCtx.drawImage(
+          results.image, 0, 0, canvasElement.width, canvasElement.height);
+    
+      canvasCtx.globalCompositeOperation = 'source-over';
+      drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS,
+                     {color: '#00FF00', lineWidth: 4});
+      drawLandmarks(canvasCtx, results.poseLandmarks,
+                    {color: '#FF0000', lineWidth: 2});
+      canvasCtx.restore();
+
+      //console.log(results);
+      if (results.poseLandmarks) {
+        for (let index = 0; index < results.poseLandmarks.length; index++) {
+          //console.log();
+          var right = results.poseLandmarks[17];
+          var left = results.poseLandmarks[18];
+          //var width = left.x - right.x;
+          const width = Math.sqrt(((right.x - left.x) * (right.x - left.x)) + ((right.y - left.y) * (right.y - left.y)));
+          //console.log(width);
+
+          //11 12 14 right
+          //11 12 13 left
+
+          //left
+          var sl = results.poseLandmarks[11]; //shoulder left
+          var sr = results.poseLandmarks[12]; //shoulder right
+          var er = results.poseLandmarks[13]; //elbow right
+          var el = results.poseLandmarks[14]; //elbow left
+          var leftShoulder = getDegrees(sl, sr, er);
+          var rightShoulder = getDegrees(sr, sl, el);
+          var shutter = leftShoulder + rightShoulder;
+          //12 14 16 right
+          //11 13 15 left
+
+          //left
+          var p0 = results.poseLandmarks[11]; //shoulder left
+          var c = results.poseLandmarks[13];  //elbow left
+          var p1 = results.poseLandmarks[15]; //wrist left
+          var leftArm = getDegrees(p0, c, p1);
+
+          //right
+          var p0 = results.poseLandmarks[12]; //shoulder left
+          var c = results.poseLandmarks[14];  //elbow left
+          var p1 = results.poseLandmarks[16]; //wrist left
+          var rightArm = getDegrees(p0, c, p1);
+
+          var total = leftArm + rightArm;
+
+          //are shoulder arm position in the right angle?
+          //
+          if(shutter < shut && !block) {
+            heart.style.display = "none";
+            shout.style.display = "block";
+
+            if(!timer.isRunning) {
+              timer.start();
+            }
+
+              const timeInSeconds = Math.round(timer.getTime() / 1000);
+              shout.innerHTML = timeInSeconds;
+
+              console.log("Hee="+timeInSeconds);
+              //canvasCtx.fillStyle = '#000000';
+              //canvasCtx.drawImage(results.segmentationMask, 0, 0,
+              //            canvasElement.width, canvasElement.height);
+
+              //Ready go!
+              if(timeInSeconds > 3) {
+                if(!timer.isRunning) {
+                  timer.stop();
+                }
+
+                var audio = new Audio('horn.wav');
+                audio.play();
+
+                block = true;
+                result = total;
+                //shout.innerHTML = "<img src='heart_4x3.jpg'/>";
+                heart.innerHTML = result+"!";
+                heart.style.display = "block";
+              }  
+
+            //startTimer();
+            
+          }
+          if(shutter > shut) {
+            shout.style.display = "none";
+            heart.style.display = "none";
+            timer.reset();
+            shout.innerHTML = 0;
+            block = false;
+          }
+
+            var theDiv = document.getElementById("info");
+            theDiv.innerHTML = "Links="+ leftArm + " Rechts="+ rightArm + " Totaal="+ total + 
+            " sl="+ leftShoulder + " sr="+ rightShoulder+ " start="+ shutter; 
+          //}
+        }
+      }
+
+      grid.updateLandmarks(results.poseWorldLandmarks);
+    }
+    
+    const pose = new Pose({locateFile: (file) => {
+      return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
+    }});
+    pose.setOptions({
+      modelComplexity: 1,
+      smoothLandmarks: true,
+      enableSegmentation: true,
+      smoothSegmentation: true,
+      minDetectionConfidence: 0.5,
+      minTrackingConfidence: 0.5
+    });
+    pose.onResults(onResults);
+    
+    const camera = new Camera(videoElement, {
+      onFrame: async () => {
+        await pose.send({image: videoElement});
+      },
+      width: 1280,
+      height: 720
+    });
+    camera.start();
+    </script>
+</head>
+
+<body>
+  <div id="info">Spread 'em</div>
+  <div class="container">
+    <div id="heart">
+      Thank you!
+      <!-- <img src="heart_4x3.jpg" display="none" width="1024" alt=""> -->
+    </div>
+    <video class="input_video"></video>
+    <div id="shout">0</div>
+    <canvas class="output_canvas" width="1280px" height="720px"></canvas>
+    <div class="landmark-grid-container"></div>
+  </div>
+</body>
+</html>

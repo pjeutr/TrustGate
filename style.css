@@ -1,0 +1,45 @@
+body {
+    background-color: linen;
+  }
+  
+  h1 {
+    color: maroon;
+    margin-left: 40px;
+  }
+  .input_video {
+    display: none;
+  }
+  .output_canvasX {
+    display: none;
+  }
+  #info {
+    text-align: center;
+    /* color: red; */
+    font-size: xx-large;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+  }
+  #shout {
+    display: none;
+    position: absolute;
+    top:100px;
+    left: 500px;
+    text-align: center;
+    color: red;
+    font-size: 200px;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+  }
+  #heart {
+    display: none;
+    position: absolute;
+    top:0;
+    left: 0;
+    padding-top: 300px;
+    text-align: center;
+    color: white;
+    font-size: 100px;       
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    width: 1500px;
+    height: 900px;      
+    background-size: cover;  
+    background-image: url("heart_4x3.jpg");
+  }
