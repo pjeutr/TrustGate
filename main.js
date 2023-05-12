@@ -56,8 +56,30 @@ class Timer {
       return this.overallTime;
     }
 }
-  
-      
+
+/*
+<p>1 = 0-150<br>
+2 = 150-240<br>
+3 = 240-270<br>
+4 = 270-300<br>
+5 = 300-360</p>;
+*/
+function makeScore(score) {
+    if (score > 300) {
+        return 5;
+    } else if (score > 270) {
+        return 4;
+    } else if (score > 240) {
+        return 3;
+    } else if (score > 150) {
+        return 2;
+    } else if (score > 0) {
+        return 1;
+    } else {
+        return -1;
+    }
+}
+
 function getDegrees(p0, c, p1) {
     //calculate the angel from 3 points, c = centre
 

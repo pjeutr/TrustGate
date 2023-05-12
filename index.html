@@ -25,7 +25,8 @@
     const canvasCtx = canvasElement.getContext('2d');
     const landmarkContainer = document.getElementsByClassName('landmark-grid-container')[0];
     const grid = new LandmarkGrid(landmarkContainer);
-    
+    const audio = new Audio('horn.wav');
+
     const timer = new Timer();
     var block = false;
     var shut = 50;
@@ -36,7 +37,7 @@
         grid.updateLandmarks([]);
         return;
       }
-    
+
       canvasCtx.save();
       canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
       canvasCtx.drawImage(results.segmentationMask, 0, 0,
@@ -107,29 +108,28 @@
               timer.start();
             }
 
-              const timeInSeconds = Math.round(timer.getTime() / 1000);
-              shout.innerHTML = timeInSeconds;
+            const timeInSeconds = Math.round(timer.getTime() / 1000);
+            shout.innerHTML = timeInSeconds;
 
-              console.log("Hee="+timeInSeconds);
-              //canvasCtx.fillStyle = '#000000';
-              //canvasCtx.drawImage(results.segmentationMask, 0, 0,
-              //            canvasElement.width, canvasElement.height);
+            console.log("Hee="+timeInSeconds);
+            //canvasCtx.fillStyle = '#000000';
+            //canvasCtx.drawImage(results.segmentationMask, 0, 0,
+            //            canvasElement.width, canvasElement.height);
 
-              //Ready go!
-              if(timeInSeconds > 3) {
-                if(!timer.isRunning) {
-                  timer.stop();
-                }
+            //Ready go!
+            if(timeInSeconds > 3) {
+              if(!timer.isRunning) {
+                timer.stop();
+              }
+              audio.play();
 
-                var audio = new Audio('horn.wav');
-                audio.play();
-
-                block = true;
-                result = total;
-                //shout.innerHTML = "<img src='heart_4x3.jpg'/>";
-                heart.innerHTML = result+"!";
-                heart.style.display = "block";
-              }  
+              block = true;
+              result = total + " score=" + makeScore(total);
+              var heart_text = document.getElementsByClassName("heart_text");
+              //heart_text.innerHTML = result+"!"
+              heart.innerHTML = result+"!"
+              heart.style.display = "block";
+            }  
 
             //startTimer();
             
@@ -148,7 +148,6 @@
           //}
         }
       }
-
       grid.updateLandmarks(results.poseWorldLandmarks);
     }
     
@@ -180,7 +179,12 @@
   <div id="info">Spread 'em</div>
   <div class="container">
     <div id="heart">
-      Thank you!
+      <span class="heart_text">Thank you!</span>
+      <p>1 = 0-150<br>
+      2 = 150-240<br>
+      3 = 240-270<br>
+      4 = 270-300<br>
+      5 = 300-360</p>;
       <!-- <img src="heart_4x3.jpg" display="none" width="1024" alt=""> -->
     </div>
     <video class="input_video"></video>

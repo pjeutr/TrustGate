@@ -43,3 +43,6 @@ body {
     background-size: cover;  
     background-image: url("heart_4x3.jpg");
   }
+  #heart p {
+    font-size: 60px;  
+  }
