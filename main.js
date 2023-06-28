@@ -57,6 +57,9 @@ class Timer {
     }
 }
 
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 /*
 <p>1 = 0-150<br>
 2 = 150-240<br>
@@ -94,3 +97,10 @@ function getDegrees(p0, c, p1) {
     return Math.round(angle * (180 / Math.PI));
 }
   
+function startAgain(timer, shout, ending) {
+  // shout.style.display = "none";
+  // ending.style.display = "none";
+  timer.reset();
+  shout.innerHTML = "start";
+  block = false;
+}

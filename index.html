@@ -19,19 +19,21 @@
 
   <script type="module">
     const shout = document.getElementById("shout");
-    const heart = document.getElementById("heart");
+    const ending = document.getElementById("ending");
     const videoElement = document.getElementsByClassName('input_video')[0];
     const canvasElement = document.getElementsByClassName('output_canvas')[0];
     const canvasCtx = canvasElement.getContext('2d');
     const landmarkContainer = document.getElementsByClassName('landmark-grid-container')[0];
     const grid = new LandmarkGrid(landmarkContainer);
-    const audio = new Audio('horn.wav');
+    //https://pixabay.com/sound-effects/search/photo/
+    const audio = new Audio('audio/iphone-camera-capture-6448.mp3');
 
     const timer = new Timer();
+    const timer2 = new Timer();
     var block = false;
-    var shut = 50;
     var result = 0;
-    
+    var previousPostion = -1;
+
     function onResults(results) {
       if (!results.poseLandmarks) {
         grid.updateLandmarks([]);
@@ -63,24 +65,17 @@
       //console.log(results);
       if (results.poseLandmarks) {
         for (let index = 0; index < results.poseLandmarks.length; index++) {
-          //console.log();
-          var right = results.poseLandmarks[17];
-          var left = results.poseLandmarks[18];
-          //var width = left.x - right.x;
-          const width = Math.sqrt(((right.x - left.x) * (right.x - left.x)) + ((right.y - left.y) * (right.y - left.y)));
-          //console.log(width);
 
           //11 12 14 right
           //11 12 13 left
-
-          //left
           var sl = results.poseLandmarks[11]; //shoulder left
           var sr = results.poseLandmarks[12]; //shoulder right
           var er = results.poseLandmarks[13]; //elbow right
           var el = results.poseLandmarks[14]; //elbow left
           var leftShoulder = getDegrees(sl, sr, er);
           var rightShoulder = getDegrees(sr, sl, el);
-          var shutter = leftShoulder + rightShoulder;
+          var shoulders = leftShoulder + rightShoulder;
+
           //12 14 16 right
           //11 13 15 left
 
@@ -96,56 +91,91 @@
           var p1 = results.poseLandmarks[16]; //wrist left
           var rightArm = getDegrees(p0, c, p1);
 
+          var currentPostion = results.poseLandmarks[23].x; //right hip 23
           var total = leftArm + rightArm;
 
-          //are shoulder arm position in the right angle?
-          //
-          if(shutter < shut && !block) {
-            heart.style.display = "none";
+          //is person standing still? (pow2 is used to block out negatives)
+          //start scanning arm position
+          var change = Math.round(Math.pow(previousPostion - currentPostion,2) * 100000);
+          previousPostion = currentPostion;
+          var timeInSeconds = 3;
+
+          //console.log(previousPostion+" - "+currentPostion);
+
+          //start measuring if ther is no movement and arms are lifted a little
+          if(change < 10  && shoulders < 60 && !block) {
+            //console.log(previousPostion+" - "+currentPostion);
+            console.log("Measuring change="+change);
+
+            ending.style.display = "none";
             shout.style.display = "block";
 
             if(!timer.isRunning) {
               timer.start();
             }
 
-            const timeInSeconds = Math.round(timer.getTime() / 1000);
-            shout.innerHTML = timeInSeconds;
+            //Wait for 3s stability
+            timeInSeconds = 3 - Math.round(timer.getTime() / 1000);
+            shout.innerHTML =   timeInSeconds; // > 0 ? timeInSeconds:0;
 
-            console.log("Hee="+timeInSeconds);
+            //console.log("Tick:"+timeInSeconds);
             //canvasCtx.fillStyle = '#000000';
             //canvasCtx.drawImage(results.segmentationMask, 0, 0,
             //            canvasElement.width, canvasElement.height);
-
-            //Ready go!
-            if(timeInSeconds > 3) {
-              if(!timer.isRunning) {
-                timer.stop();
-              }
-              audio.play();
-
-              block = true;
-              result = total + " score=" + makeScore(total);
-              var heart_text = document.getElementsByClassName("heart_text");
-              //heart_text.innerHTML = result+"!"
-              heart.innerHTML = result+"!"
-              heart.style.display = "block";
-            }  
-
-            //startTimer();
-            
-          }
-          if(shutter > shut) {
-            shout.style.display = "none";
-            heart.style.display = "none";
+          } else {
+            //startAgain(timer, shout, ending);
             timer.reset();
-            shout.innerHTML = 0;
-            block = false;
           }
 
-            var theDiv = document.getElementById("info");
-            theDiv.innerHTML = "Links="+ leftArm + " Rechts="+ rightArm + " Totaal="+ total + 
-            " sl="+ leftShoulder + " sr="+ rightShoulder+ " start="+ shutter; 
-          //}
+          //Ready go!
+          if(timeInSeconds == 0 || block) {
+            block = true;
+            console.log("Ready total="+total);
+
+            audio.play();
+
+            result = total + " score=" + makeScore(total);
+            var ending_text = document.getElementsByClassName("ending_text");
+            ending_text.innerHTML = result+"!"
+            ending.innerHTML = result+"!"
+            ending.style.display = "block";
+            console.log(result);
+
+
+            //show result 2s
+            if(!timer2.isRunning) {
+              timer2.start();
+            }
+            var pauze = Math.round(timer2.getTime() / 1000);
+            console.log("pauze="+pauze);
+
+            if(pauze > 2) {
+              ending.style.display = "none";
+              shout.style.display = "none";
+              timer2.reset();
+              //timer.reset();
+              block = false;
+            }
+             
+          }
+          if(timeInSeconds == -5) {
+            //startAgain(timer, shout, ending);
+            console.log("reset");
+
+            ending.style.display = "none";
+            shout.style.display = "none";
+            timer.reset();
+          }  
+
+          //startTimer();
+            
+          
+
+          var theDiv = document.getElementById("info");
+          if(change != 0) {
+            theDiv.innerHTML = "Links="+ leftArm + " Rechts="+ rightArm + " Totaal="+ total + " Schouders="+ shoulders + " change="+ change;
+          }
+
         }
       }
       grid.updateLandmarks(results.poseWorldLandmarks);
@@ -155,6 +185,7 @@
       return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
     }});
     pose.setOptions({
+      selfieMode: true,
       modelComplexity: 1,
       smoothLandmarks: true,
       enableSegmentation: true,
@@ -178,8 +209,8 @@
 <body>
   <div id="info">Spread 'em</div>
   <div class="container">
-    <div id="heart">
-      <span class="heart_text">Thank you!</span>
+    <div id="ending">
+      <span class="ending_text">Thank you!</span>
       <p>1 = 0-150<br>
       2 = 150-240<br>
       3 = 240-270<br>
