@@ -2,6 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils_3d/control_utils_3d.js" crossorigin="anonymous"></script>
@@ -27,12 +28,19 @@
     const grid = new LandmarkGrid(landmarkContainer);
     //https://pixabay.com/sound-effects/search/photo/
     const audio = new Audio('audio/iphone-camera-capture-6448.mp3');
+    const shoutText = "Ready";
+    shout.innerHTML = shoutText;
 
     const timer = new Timer();
     const timer2 = new Timer();
     var block = false;
+    var oneshot = false;
     var result = 0;
     var previousPostion = -1;
+
+    //parameters
+    const shoulderTreshold = 80;
+    const changeTreshold = 80;
 
     function onResults(results) {
       if (!results.poseLandmarks) {
@@ -99,13 +107,14 @@
           var change = Math.round(Math.pow(previousPostion - currentPostion,2) * 100000);
           previousPostion = currentPostion;
           var timeInSeconds = 3;
+          shout.innerHTML = shoutText;
 
           //console.log(previousPostion+" - "+currentPostion);
 
-          //start measuring if ther is no movement and arms are lifted a little
-          if(change < 10  && shoulders < 60 && !block) {
+          //start measuring if there is no movement and arms are lifted a little
+          if(change < 10  && shoulders < shoulderTreshold && !block) {
             //console.log(previousPostion+" - "+currentPostion);
-            console.log("Measuring change="+change);
+            //console.log("Measuring change="+change);
 
             ending.style.display = "none";
             shout.style.display = "block";
@@ -116,7 +125,7 @@
 
             //Wait for 3s stability
             timeInSeconds = 3 - Math.round(timer.getTime() / 1000);
-            shout.innerHTML =   timeInSeconds; // > 0 ? timeInSeconds:0;
+            shout.innerHTML = timeInSeconds; // > 0 ? timeInSeconds:0;
 
             //console.log("Tick:"+timeInSeconds);
             //canvasCtx.fillStyle = '#000000';
@@ -130,50 +139,54 @@
           //Ready go!
           if(timeInSeconds == 0 || block) {
             block = true;
-            console.log("Ready total="+total);
+            
+            if(!oneshot) {
+              console.log("One Ready total="+total);
+              oneshot = true;
+              audio.play();
+              var score = makeScore(total);
 
-            audio.play();
+              result = total + " score=" + score;
+              var ending_text = document.getElementsByClassName("ending_text");
+              ending_text.innerHTML = result+"!"
+              ending.innerHTML = result+"!"
+              ending.style.display = "block";
 
-            result = total + " score=" + makeScore(total);
-            var ending_text = document.getElementsByClassName("ending_text");
-            ending_text.innerHTML = result+"!"
-            ending.innerHTML = result+"!"
-            ending.style.display = "block";
-            console.log(result);
+              $.post("https://wbw.one/webhooks/trustgate",
+              {
+                  id: 1, 
+                  result, total,
+                  score: score, 
+                  remark: "lowlands"
+              },
+              function(data, status){
+                console.log("Data: " + data + "\nStatus: " + status);
+              });
+              
+            }
 
+            //console.log(result);
 
             //show result 2s
             if(!timer2.isRunning) {
               timer2.start();
             }
             var pauze = Math.round(timer2.getTime() / 1000);
-            console.log("pauze="+pauze);
+            //console.log("pauze="+pauze);
 
-            if(pauze > 2) {
+            if(pauze > 1) {
               ending.style.display = "none";
               shout.style.display = "none";
               timer2.reset();
               //timer.reset();
               block = false;
+              oneshot = false;
             }
              
           }
-          if(timeInSeconds == -5) {
-            //startAgain(timer, shout, ending);
-            console.log("reset");
-
-            ending.style.display = "none";
-            shout.style.display = "none";
-            timer.reset();
-          }  
-
-          //startTimer();
-            
-          
-
           var theDiv = document.getElementById("info");
           if(change != 0) {
-            theDiv.innerHTML = "Links="+ leftArm + " Rechts="+ rightArm + " Totaal="+ total + " Schouders="+ shoulders + " change="+ change;
+            theDiv.innerHTML = "Links="+ leftArm + " Rechts="+ rightArm + " Totaal="+ total + " Schouders="+ shoulders + " Beweging="+ change;
           }
 
         }
@@ -207,7 +220,7 @@
 </head>
 
 <body>
-  <div id="info">Spread 'em</div>
+  <div id="info">Welcome to the Trustgate</div>
   <div class="container">
     <div id="ending">
       <span class="ending_text">Thank you!</span>
@@ -220,7 +233,8 @@
     </div>
     <video class="input_video"></video>
     <div id="shout">0</div>
-    <canvas class="output_canvas" width="1280px" height="720px"></canvas>
+    <!-- 1536 x 864 -->
+    <canvas class="output_canvas" width="1536px" height="864px"></canvas>
     <div class="landmark-grid-container"></div>
   </div>
 </body>

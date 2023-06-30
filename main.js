@@ -61,11 +61,13 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 /*
-<p>1 = 0-150<br>
-2 = 150-240<br>
-3 = 240-270<br>
+<p>
+5 = 300-360<br>
 4 = 270-300<br>
-5 = 300-360</p>;
+3 = 240-270<br>
+2 = 150-240<br>
+1 = 0-150<br>
+</p>;
 */
 function makeScore(score) {
     if (score > 300) {

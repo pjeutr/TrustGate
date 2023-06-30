@@ -1,18 +1,20 @@
 body {
     background-color: linen;
+    margin: 0;
   }
   
   h1 {
-    color: maroon;
+    color: orange;
     margin-left: 40px;
   }
   .input_video {
     display: none;
   }
-  .output_canvasX {
+  .landmark-grid-container {
     display: none;
   }
   #info {
+    /* display: none; */
     text-align: center;
     /* color: red; */
     font-size: xx-large;
@@ -22,7 +24,7 @@ body {
     display: none;
     position: absolute;
     top:100px;
-    left: 500px;
+    width: 100%;
     text-align: center;
     color: red;
     font-size: 200px;
@@ -39,8 +41,8 @@ body {
     color: black;
     font-size: 100px;       
     font-family: Verdana, Geneva, Tahoma, sans-serif;
-    width: 1500px;
-    height: 900px;      
+    width: 100%;
+    height: 100%;      
     background-color: azure;
     background-size: cover;  
     /* background-image: url("heart_4x3.jpg"); */
