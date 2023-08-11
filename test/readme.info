@@ -1,0 +1,6 @@
+
+pip3 install locust
+locust -V
+locust -f /Volumes/Work/repositories/trusttrail/locustfile.py
+locust -f locustfile.py --headless --u 1 -r 1 --run-time=4 -H https://wbw.one/ --customarg gate
+
