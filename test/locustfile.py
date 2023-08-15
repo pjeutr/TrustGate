@@ -77,7 +77,8 @@ class TrustTrailUser(HttpUser):
                 data = {
                     "result": "666",
                     "total": "204",
-                    "score": random.randint(1,5),
+                    # "score": random.randint(1,5),
+                    "score": 5,
                     "remark": "locust"
                 },
                 catch_response=True,

@@ -19,6 +19,7 @@
 */ -->
 
   <script type="module">
+    const theDiv = document.getElementById("info");
     const shout = document.getElementById("shout");
     const ending = document.getElementById("ending");
     const videoElement = document.getElementsByClassName('input_video')[0];
@@ -47,6 +48,8 @@
         grid.updateLandmarks([]);
         return;
       }
+      //remove debug line
+      theDiv.style.display = "none";
 
       canvasCtx.save();
       canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
@@ -184,7 +187,7 @@
             }
              
           }
-          var theDiv = document.getElementById("info");
+          
           if(change != 0) {
             theDiv.innerHTML = "Links="+ leftArm + " Rechts="+ rightArm + " Totaal="+ total + " Schouders="+ shoulders + " Beweging="+ change;
           }
@@ -207,7 +210,15 @@
       minTrackingConfidence: 0.5
     });
     pose.onResults(onResults);
-    
+
+    (function() {
+        //alert(window.innerWidth);
+        // canvasElement.width="1536px";
+        // canvasElement.height="864px";
+        canvasElement.width=window.innerWidth;
+        canvasElement.height=window.innerHeight;
+    })();
+
     const camera = new Camera(videoElement, {
       onFrame: async () => {
         await pose.send({image: videoElement});
